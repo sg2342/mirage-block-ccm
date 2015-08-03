@@ -2,18 +2,17 @@ open Lwt
 
 module Make(B : V1_LWT.BLOCK) = struct
 
-  type key = {
-    key :Nocrypto.Cipher_block.AES.CCM.key;
-    maclen: int;
-    nonce_len: int}
+  type key = { key       : Nocrypto.Cipher_block.AES.CCM.key;
+               maclen    : int;
+               nonce_len : int
+             }
 
-  type t = {
-    raw : B.t;
-    mutable k: key option;
-    sector_len: int;
-    sectors: int64;
-    s: Cstruct.t;
-  }
+  type t = { raw        : B.t;
+             mutable k  : key option;
+             sector_len : int;
+             sectors    : int64;
+             s          : Cstruct.t
+           }
 
   let disconnect eb = B.disconnect eb.raw
 
