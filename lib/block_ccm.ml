@@ -8,7 +8,7 @@ module Make(B : V1_LWT.BLOCK) = struct
              }
 
   type t = { raw        : B.t;
-             k          : key ;
+             k          : key;
              sector_len : int;
              sectors    : int64;
              s          : Cstruct.t
@@ -33,7 +33,7 @@ module Make(B : V1_LWT.BLOCK) = struct
       let c, nonce, adata =
         Cstruct.(sub eb.s 0 (eb.sector_len + maclen),
                  sub eb.s (eb.sector_len + maclen) nonce_len,
-                 create 0) in
+                 sub eb.s (eb.sector_len + maclen + nonce_len) 0) in
       match Nocrypto.Cipher_block.AES.CCM.decrypt ~key ~nonce ~adata c with
       | Some plain ->
         Cstruct.blit plain 0 buffer 0 eb.sector_len;
