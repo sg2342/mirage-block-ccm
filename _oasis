@@ -1,0 +1,16 @@
+OASISFormat: 0.4
+Name: mirage-block-ccm
+Version: 0.1.0
+Synopsis: Mirgage AES-CCM block driver
+Authors: Stefan Grundmann
+License: ISC
+Plugins:     META (0.3)
+BuildTools:  ocamlbuild
+
+Library mirage_block_ccm
+ CompiledObject:     best
+ Path:               lib
+ Findlibname:        mirage-block-ccm
+ Modules:            Block_ccm
+ BuildDepends:       cstruct, lwt, nocrypto, mirage-types, io-page
+
