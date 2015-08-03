@@ -17,38 +17,39 @@ module Make(B : V1_LWT.BLOCK) = struct
   let disconnect eb = B.disconnect eb.raw
 
   let s0s1 eb =
-    Cstruct.sub eb.s 0 eb.sector_len,
-    Cstruct.sub eb.s eb.sector_len eb.sector_len
+    Cstruct.(sub eb.s 0 eb.sector_len,
+             sub eb.s eb.sector_len eb.sector_len)
 
   let kmn {key;maclen;nonce_len} = key, maclen, nonce_len
 
-  let read_internal eb k sector buffer =
+  let sector = Int64.mul 2L
+
+  let read_internal eb k s buffer =
     let key,maclen,nonce_len=kmn k in
-    let s = Int64.mul sector 2L in
     let s0,s1 = s0s1 eb in
-    B.read eb.raw s [s0; s1] >>= function
+    B.read eb.raw (sector s) [s0; s1] >>= function
     | `Error _ as e -> return e
     | `Ok () ->
-      let c = Cstruct.sub eb.s 0 (eb.sector_len + maclen) in
-      let nonce = Cstruct.sub eb.s (eb.sector_len + maclen) nonce_len in
-      let adata = Cstruct.create 0 in
+      let c, nonce, adata =
+        Cstruct.(sub eb.s 0 (eb.sector_len + maclen),
+                 sub eb.s (eb.sector_len + maclen) nonce_len,
+                 create 0) in
       match Nocrypto.Cipher_block.AES.CCM.decrypt ~key ~nonce ~adata c with
       | Some plain ->
         Cstruct.blit plain 0 buffer 0 eb.sector_len;
         return (`Ok ())
       | None -> return (`Error (`Unknown "decrypt error"))
 
-  let write_internal eb k sector p =
+  let write_internal eb k s p =
     let key,maclen,nonce_len=kmn k in
-    let s = Int64.mul sector 2L in
     let nonce = Nocrypto.Rng.generate nonce_len in
     let adata = Cstruct.create 0 in
     let c = Nocrypto.Cipher_block.AES.CCM.encrypt ~key ~nonce ~adata p in
     let s0,s1 = s0s1 eb in
-    Cstruct.blit c 0 s0 0 eb.sector_len;
-    Cstruct.blit c eb.sector_len s1 0 maclen;
-    Cstruct.blit nonce 0 s1 maclen nonce_len;
-    B.write eb.raw s [s0;s1]
+    Cstruct.(blit c 0 s0 0 eb.sector_len;
+             blit c eb.sector_len s1 0 maclen;
+             blit nonce 0 s1 maclen nonce_len);
+    B.write eb.raw (sector s) [s0;s1]
 
 
   (** Call [fn sector page] for each page in each buffer. *)
@@ -86,11 +87,10 @@ module Make(B : V1_LWT.BLOCK) = struct
         write_internal eb k sector page )
     | None -> return (`Error (`Unknown "not keyed"))
 
-  type info = {
-    read_write : bool;
-    sector_size : int;
-    size_sectors : int64;
-  }
+  type info = {read_write   : bool;
+               sector_size  : int;
+               size_sectors : int64
+              }
 
   let get_info eb =
     B.get_info eb.raw >>= fun raw_info ->
@@ -102,9 +102,10 @@ module Make(B : V1_LWT.BLOCK) = struct
 
   type 'a io = 'a B.io
   type error = B.error
+  type id = (B.t * string)
 
-  type id = string
-  let id eb =  "foo"
+  let id eb = (eb.raw, "aes-ccm")
+
   type page_aligned_buffer = B.page_aligned_buffer
 
   let set_key ?maclen ?nonce_len key eb =
