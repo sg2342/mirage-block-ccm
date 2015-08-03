@@ -1,10 +1,10 @@
 OASISFormat: 0.4
-Name: mirage-block-ccm
-Version: 0.1.0
-Synopsis: Mirgage AES-CCM block driver
-Authors: Stefan Grundmann
-License: ISC
-Plugins:     META (0.3)
+Name:        mirage-block-ccm
+Version:     0.1.0
+Synopsis:    Mirgage AES-CCM block driver
+Authors:     Stefan Grundmann
+License:     ISC
+Plugins:     META (0.4), DevFiles (0.4)
 BuildTools:  ocamlbuild
 
 Library mirage_block_ccm
