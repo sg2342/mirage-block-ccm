@@ -8,7 +8,7 @@ module Make(B : V1_LWT.BLOCK) = struct
              }
 
   type t = { raw        : B.t;
-             mutable k  : key option;
+             k          : key ;
              sector_len : int;
              sectors    : int64;
              s          : Cstruct.t
@@ -20,13 +20,13 @@ module Make(B : V1_LWT.BLOCK) = struct
     Cstruct.(sub eb.s 0 eb.sector_len,
              sub eb.s eb.sector_len eb.sector_len)
 
-  let kmn {key;maclen;nonce_len} = key, maclen, nonce_len
+  let kmn { key; maclen; nonce_len } = key, maclen, nonce_len
 
   let sector = Int64.mul 2L
 
-  let read_internal eb k s buffer =
-    let key,maclen,nonce_len=kmn k in
-    let s0,s1 = s0s1 eb in
+  let read_internal eb s buffer =
+    let key, maclen, nonce_len = kmn eb.k in
+    let s0, s1 = s0s1 eb in
     B.read eb.raw (sector s) [s0; s1] >>= function
     | `Error _ as e -> return e
     | `Ok () ->
@@ -40,8 +40,8 @@ module Make(B : V1_LWT.BLOCK) = struct
         return (`Ok ())
       | None -> return (`Error (`Unknown "decrypt error"))
 
-  let write_internal eb k s p =
-    let key,maclen,nonce_len=kmn k in
+  let write_internal eb s p =
+    let key, maclen, nonce_len=kmn eb.k in
     let nonce = Nocrypto.Rng.generate nonce_len in
     let adata = Cstruct.create 0 in
     let c = Nocrypto.Cipher_block.AES.CCM.encrypt ~key ~nonce ~adata p in
@@ -53,7 +53,7 @@ module Make(B : V1_LWT.BLOCK) = struct
 
 
   (** Call [fn sector page] for each page in each buffer. *)
-  let each_page eb key sector_start buffers fn =
+  let each_page eb sector_start buffers fn =
     let do_buffer sector buffer =
       let len = Cstruct.len buffer in
       let rec loop_page s i =
@@ -76,16 +76,12 @@ module Make(B : V1_LWT.BLOCK) = struct
     loop sector_start buffers
 
   let read eb sector_start buffers =
-    match eb.k with | Some k ->
-      each_page eb k sector_start buffers (fun sector page ->
-          read_internal eb k sector page )
-    | None -> return (`Error (`Unknown "not keyed"))
+    each_page eb sector_start buffers (fun sector page ->
+        read_internal eb sector page )
 
   let write eb sector_start buffers =
-    match eb.k with | Some k ->
-    each_page eb k sector_start buffers (fun sector page ->
-        write_internal eb k sector page )
-    | None -> return (`Error (`Unknown "not keyed"))
+    each_page eb sector_start buffers (fun sector page ->
+        write_internal eb sector page )
 
   type info = {read_write   : bool;
                sector_size  : int;
@@ -108,19 +104,15 @@ module Make(B : V1_LWT.BLOCK) = struct
 
   type page_aligned_buffer = B.page_aligned_buffer
 
-  let set_key ?maclen ?nonce_len key eb =
+  let connect ?maclen ?nonce_len key raw =
+    B.get_info raw >>= fun raw_info ->
+    assert(raw_info.B.sector_size = 512);
     let maclen = match maclen with | None -> 8 | Some x -> x in
     let nonce_len = match nonce_len with | None -> 8 | Some x -> x in
     let key = Nocrypto.Cipher_block.AES.CCM.of_secret ~maclen key in
-    eb.k <- Some {key; maclen; nonce_len}
-
-  let unset_key eb = eb.k <- None
-
-  let connect raw =
-    B.get_info raw >>= fun raw_info ->
-    assert(raw_info.B.sector_size = 512);
+    let k = {key; maclen; nonce_len} in
     let sectors = Int64.div raw_info.B.size_sectors 2L in
     let s = Io_page.get 1  |> Io_page.to_cstruct in
-    let k = None in
-    return (`Ok {raw; sector_len=raw_info.B.sector_size; sectors; k; s})
+    let sector_len = raw_info.B.sector_size in
+    return (`Ok { raw; sector_len; sectors; k; s })
 end
