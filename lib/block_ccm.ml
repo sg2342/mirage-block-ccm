@@ -104,7 +104,7 @@ module Make(B : V1_LWT.BLOCK) = struct
 
   type page_aligned_buffer = B.page_aligned_buffer
 
-  let connect ?maclen ?nonce_len key raw =
+  let connect ?maclen ?nonce_len ~key raw =
     B.get_info raw >>= fun raw_info ->
     assert(raw_info.B.sector_size = 512);
     let maclen = match maclen with | None -> 8 | Some x -> x in
