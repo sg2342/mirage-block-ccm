@@ -1,8 +1,10 @@
 S lib/
 S examples/
+S tests/
 
 B _Build/lib
 B _Build/examles
+B _Build/tests
 
 PKG lwt
 PKG lwt.syntax
@@ -16,3 +18,4 @@ PKG io-page
 PKG cmdliner
 PKG hex
 PKG stringext
+PKG oUnit
