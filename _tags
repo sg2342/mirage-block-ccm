@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 795275ec6efef1192ffbabbff16eb3f9)
+# DO NOT EDIT (digest: a54d60086f89e5029cab927e60b3b757)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -19,7 +19,7 @@ true: annot, bin_annot
 <lib/*.ml{,i,y}>: pkg_cstruct
 <lib/*.ml{,i,y}>: pkg_io-page
 <lib/*.ml{,i,y}>: pkg_lwt
-<lib/*.ml{,i,y}>: pkg_mirage-types
+<lib/*.ml{,i,y}>: pkg_mirage-types.lwt
 <lib/*.ml{,i,y}>: pkg_nocrypto
 # Executable convert
 "examples/ccmblock.native": pkg_cmdliner
@@ -29,7 +29,7 @@ true: annot, bin_annot
 "examples/ccmblock.native": pkg_lwt
 "examples/ccmblock.native": pkg_lwt.unix
 "examples/ccmblock.native": pkg_mirage-block-unix
-"examples/ccmblock.native": pkg_mirage-types
+"examples/ccmblock.native": pkg_mirage-types.lwt
 "examples/ccmblock.native": pkg_nocrypto
 "examples/ccmblock.native": pkg_nocrypto.unix
 "examples/ccmblock.native": pkg_stringext
@@ -41,7 +41,7 @@ true: annot, bin_annot
 <examples/*.ml{,i,y}>: pkg_lwt
 <examples/*.ml{,i,y}>: pkg_lwt.unix
 <examples/*.ml{,i,y}>: pkg_mirage-block-unix
-<examples/*.ml{,i,y}>: pkg_mirage-types
+<examples/*.ml{,i,y}>: pkg_mirage-types.lwt
 <examples/*.ml{,i,y}>: pkg_nocrypto
 <examples/*.ml{,i,y}>: pkg_nocrypto.unix
 <examples/*.ml{,i,y}>: pkg_stringext
@@ -54,7 +54,7 @@ true: annot, bin_annot
 "tests/testrunner.native": pkg_io-page.unix
 "tests/testrunner.native": pkg_lwt
 "tests/testrunner.native": pkg_lwt.unix
-"tests/testrunner.native": pkg_mirage-types
+"tests/testrunner.native": pkg_mirage-types.lwt
 "tests/testrunner.native": pkg_nocrypto
 "tests/testrunner.native": pkg_nocrypto.unix
 "tests/testrunner.native": pkg_oUnit
@@ -64,7 +64,7 @@ true: annot, bin_annot
 <tests/*.ml{,i,y}>: pkg_io-page.unix
 <tests/*.ml{,i,y}>: pkg_lwt
 <tests/*.ml{,i,y}>: pkg_lwt.unix
-<tests/*.ml{,i,y}>: pkg_mirage-types
+<tests/*.ml{,i,y}>: pkg_mirage-types.lwt
 <tests/*.ml{,i,y}>: pkg_nocrypto
 <tests/*.ml{,i,y}>: pkg_nocrypto.unix
 <tests/*.ml{,i,y}>: pkg_oUnit
