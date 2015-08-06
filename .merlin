@@ -1,10 +1,18 @@
 S lib/
+S examples/
 
 B _Build/lib
+B _Build/examles
 
 PKG lwt
+PKG lwt.syntax
 PKG mirage
 PKG mirage-types
+PKG mirage-block-unix
+PKG mirage-unix
 PKG cstruct
 PKG nocrypto
 PKG io-page
+PKG cmdliner
+PKG hex
+PKG stringext
