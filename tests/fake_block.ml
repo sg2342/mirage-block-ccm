@@ -29,12 +29,6 @@ type error = [
 
 let sector_size = 512
 
-let error_message = function
-  | `Unknown msg -> msg
-  | `Unimplemented -> "Unimplemented"
-  | `Is_read_only -> "Is_read_only"
-  | `Disconnected -> "Disconnected"
-
 type info = {
   read_write: bool;    (** True if we can write, false if read/only *)
   sector_size: int;    (** Octets per sector *)
@@ -56,13 +50,15 @@ let write device sector_start buffers =
   `Ok () |> return
 
 let read device sector_start buffers =
-  let rec loop dstoff = function
-    | [] -> ()
-    | x :: xs ->
+  if 0 = (Cstruct.len device) then return (`Error `Unimplemented)
+  else
+    let rec loop dstoff = function
+      | [] -> ()
+      | x :: xs ->
         Cstruct.blit device dstoff x 0 (Cstruct.len x);
         loop (dstoff + (Cstruct.len x)) xs in
-  loop (safe_of_int64 sector_start * sector_size) buffers;
-  `Ok () |> return
+    loop (safe_of_int64 sector_start * sector_size) buffers;
+    `Ok () |> return
 
 let info = {
   read_write = true;
@@ -76,11 +72,12 @@ let get_info _device = return info
 
 let disconnect _device = return ()
 
-let id _device = ()
+(* let id _device = () *)
 
 type page_aligned_buffer = Cstruct.t
 
-let connect () =
-  let data = Cstruct.create size in
-  Cstruct.blit_from_string (String.make sector_size (Char.chr 0)) 0 data 0 sector_size;
-  `Ok data |> return
+let connect sz =
+  let sz = match sz with | None -> size | Some x -> x in
+    let data = Cstruct.create sz in
+    if sz != 0 then Cstruct.blit_from_string (String.make sector_size (Char.chr 0)) 0 data 0 sector_size;
+    `Ok data |> return
