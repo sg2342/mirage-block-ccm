@@ -15,8 +15,8 @@ Library mirage_block_ccm
  BuildDepends:       cstruct, lwt, nocrypto, mirage-types, io-page
 
 Flag examples
-  Description   : example programs.
-  Default       : false
+ Description    : example programs.
+ Default        : false
 
 Executable "convert"
  Path           : examples/
@@ -25,3 +25,22 @@ Executable "convert"
  CompiledObject : native
  MainIs         : ccmblock.ml
  BuildDepends   : mirage-block-ccm, nocrypto.unix, cmdliner, stringext, cstruct, io-page, io-page.unix, lwt, lwt.unix, mirage-block-unix
+
+Library "testlib"
+ Path           : tests/
+ Modules        : Block_ccm_tests
+ Install        : false
+ Build         $: flag(tests)
+ BuildDepends   : mirage-block-unix, oUnit
+
+Executable "test_runner"
+ Path : tests/
+ Build         $: flag(tests)
+ Install        : false
+ MainIs         : testrunner.ml
+ CompiledObject : native
+ BuildDepends   : mirage-block-ccm, nocrypto.unix, oUnit
+
+Test it
+ Command        : $test_runner
+ Run           $: flag(tests)
