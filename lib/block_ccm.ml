@@ -33,7 +33,8 @@ module Make(B : V1_LWT.BLOCK) = struct
       let c, nonce, adata =
         Cstruct.(sub eb.s 0 (eb.sector_len + maclen),
                  sub eb.s (eb.sector_len + maclen) nonce_len,
-                 sub eb.s (eb.sector_len + maclen + nonce_len) 0) in
+                 sub eb.s (eb.sector_len + maclen + nonce_len)
+                   (eb.sector_len - maclen - nonce_len)) in
       match Nocrypto.Cipher_block.AES.CCM.decrypt ~key ~nonce ~adata c with
       | Some plain ->
         Cstruct.blit plain 0 buffer 0 eb.sector_len;
@@ -41,15 +42,17 @@ module Make(B : V1_LWT.BLOCK) = struct
       | None -> return (`Error (`Unknown "decrypt error"))
 
   let write_internal eb s p =
-    let key, maclen, nonce_len=kmn eb.k in
-    let nonce = Nocrypto.Rng.generate nonce_len in
-    let adata = Cstruct.create 0 in
+    let key, maclen, nonce_len = kmn eb.k in
+    let fill = Nocrypto.Rng.generate (eb.sector_len - maclen) in
+    let nonce, adata =
+      Cstruct.(sub fill 0 nonce_len,
+               sub fill nonce_len (eb.sector_len - maclen - nonce_len)) in
     let c = Nocrypto.Cipher_block.AES.CCM.encrypt ~key ~nonce ~adata p in
     let s0,s1 = s0s1 eb in
     Cstruct.(blit c 0 s0 0 eb.sector_len;
              blit c eb.sector_len s1 0 maclen;
-             blit nonce 0 s1 maclen nonce_len);
-    B.write eb.raw (sector s) [s0;s1]
+             blit fill 0 s1 maclen (eb.sector_len - maclen));
+    B.write eb.raw (sector s) [s0; s1]
 
 
   (** Call [fn sector page] for each page in each buffer. *)
