@@ -1,8 +1,8 @@
 # OASIS_START
-# DO NOT EDIT (digest: ae9e6bdb20a47080368997e720353428)
+# DO NOT EDIT (digest: 69c9f7ed14d4fb59893e0c449f798579)
 version = "0.1.0"
 description = "Mirgage AES-CCM block driver"
-requires = "mirage-block-unix oUnit"
+requires = "mirage-block-ccm oUnit"
 archive(byte) = "testlib.cma"
 archive(byte, plugin) = "testlib.cma"
 archive(native) = "testlib.cmxa"

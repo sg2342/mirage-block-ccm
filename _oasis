@@ -28,18 +28,18 @@ Executable "convert"
 
 Library "testlib"
  Path           : tests/
- Modules        : Block_ccm_tests
+ Modules        : Block_ccm_tests, Fake_block
  Install        : false
  Build         $: flag(tests)
- BuildDepends   : mirage-block-unix, oUnit
+ BuildDepends   : mirage-block-ccm, oUnit
 
 Executable "test_runner"
- Path : tests/
+ Path           : tests/
  Build         $: flag(tests)
  Install        : false
  MainIs         : testrunner.ml
  CompiledObject : native
- BuildDepends   : mirage-block-ccm, nocrypto.unix, oUnit
+ BuildDepends   : mirage-block-ccm, nocrypto.unix, io-page.unix, oUnit, lwt.unix
 
 Test it
  Command        : $test_runner
