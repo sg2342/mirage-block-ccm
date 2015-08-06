@@ -18,6 +18,10 @@ Flag examples
  Description    : example programs.
  Default        : false
 
+Flag coverage
+  Description   : Use Bisect to generate coverage data.
+  Default       : false
+
 Executable "convert"
  Path           : examples/
  Build         $: flag(examples)

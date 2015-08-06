@@ -39,3 +39,8 @@ configure:
 .PHONY: build doc test all install uninstall reinstall clean distclean configure
 
 # OASIS_STOP
+
+cover_test: build
+	BISECT_FILE=XBsect $(SETUP) -test -runner sequential -no-output-file
+	bisect-report -I _build -summary-only -I _build -text - XBsect*.out
+	rm XBsect*.out
