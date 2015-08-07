@@ -109,10 +109,10 @@ module Make(B : V1_LWT.BLOCK) = struct
 
   let connect ?maclen ?nonce_len ~key raw =
     B.get_info raw >>= fun raw_info ->
-    assert(raw_info.B.sector_size = 512);
     let maclen = match maclen with | None -> 8 | Some x -> x in
     let nonce_len = match nonce_len with | None -> 8 | Some x -> x in
     let key = Nocrypto.Cipher_block.AES.CCM.of_secret ~maclen key in
+    assert(raw_info.B.sector_size > (( maclen + nonce_len) * 2));
     let k = {key; maclen; nonce_len} in
     let sectors = Int64.div raw_info.B.size_sectors 2L in
     let s = Io_page.get 1  |> Io_page.to_cstruct in
