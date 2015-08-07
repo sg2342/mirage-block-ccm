@@ -48,3 +48,11 @@ Executable "test_runner"
 Test it
  Command        : $test_runner
  Run           $: flag(tests)
+
+Document "mirage-block-ccm"
+ Title                : Documentation and API reference
+ Type                 : OCamlbuild (0.4)
+ BuildTools          +: ocamldoc
+ Install              : false
+ XOCamlbuildPath      : lib
+ XOCamlbuildLibraries : mirage-block-ccm
