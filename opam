@@ -1,12 +1,11 @@
 opam-version: "1.2"
-version:      "0.1.0"
 name:         "mirage-block-ccm"
 homepage:     "https://github.com/sg2342/mirage-block-ccm"
 dev-repo:     "https://github.com/sg2342/mirage-block-ccm.git"
 bug-reports:  "https://github.com/sg2342/mirage-block-ccm/issues"
 author:       ["Stefan Grundmann <sg2342@googlemail.com>"]
 maintainer:   ["Stefan Grundmann <sg2342@googlemail.com>"]
-license:      "ICS"
+license:      "ISC"
 
 build: [
   ["ocaml" "setup.ml" "-configure" "--prefix" prefix]

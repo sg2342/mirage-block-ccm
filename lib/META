@@ -1,6 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: e44bc1753d24103959ea557e8528284a)
-version = "0.1.0"
+# DO NOT EDIT (digest: 4a49505fa9a778f8a58c8135fefe1e34)
+version = "1.0.0"
 description = "Mirgage AES-CCM block driver"
 requires = "cstruct lwt nocrypto mirage-types.lwt io-page"
 archive(byte) = "mirage_block_ccm.cma"
