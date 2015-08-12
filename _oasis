@@ -28,7 +28,7 @@ Executable "convert"
  Install        : false
  CompiledObject : native
  MainIs         : ccmblock.ml
- BuildDepends   : mirage-block-ccm, nocrypto.unix, cmdliner, stringext, cstruct, io-page, io-page.unix, lwt, lwt.unix, mirage-block-unix
+ BuildDepends   : mirage-block-ccm, nocrypto.unix, cmdliner, astring, cstruct, io-page, io-page.unix, lwt, lwt.unix, mirage-block-unix
 
 Library "testlib"
  Path           : tests/

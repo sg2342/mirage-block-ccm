@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: a54d60086f89e5029cab927e60b3b757)
+# DO NOT EDIT (digest: 2c46051e1b8c1d26b35a7df2742cfe05)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -22,6 +22,7 @@ true: annot, bin_annot
 <lib/*.ml{,i,y}>: pkg_mirage-types.lwt
 <lib/*.ml{,i,y}>: pkg_nocrypto
 # Executable convert
+"examples/ccmblock.native": pkg_astring
 "examples/ccmblock.native": pkg_cmdliner
 "examples/ccmblock.native": pkg_cstruct
 "examples/ccmblock.native": pkg_io-page
@@ -32,8 +33,8 @@ true: annot, bin_annot
 "examples/ccmblock.native": pkg_mirage-types.lwt
 "examples/ccmblock.native": pkg_nocrypto
 "examples/ccmblock.native": pkg_nocrypto.unix
-"examples/ccmblock.native": pkg_stringext
 "examples/ccmblock.native": use_mirage_block_ccm
+<examples/*.ml{,i,y}>: pkg_astring
 <examples/*.ml{,i,y}>: pkg_cmdliner
 <examples/*.ml{,i,y}>: pkg_cstruct
 <examples/*.ml{,i,y}>: pkg_io-page
@@ -44,7 +45,6 @@ true: annot, bin_annot
 <examples/*.ml{,i,y}>: pkg_mirage-types.lwt
 <examples/*.ml{,i,y}>: pkg_nocrypto
 <examples/*.ml{,i,y}>: pkg_nocrypto.unix
-<examples/*.ml{,i,y}>: pkg_stringext
 <examples/*.ml{,i,y}>: use_mirage_block_ccm
 # Library testlib
 "tests/testlib.cmxs": use_testlib

@@ -6,9 +6,9 @@ let opts = function
   | (None, _, _) | (_, None, _) | (_, _, None) ->
     fail (Failure "Key In and Out required")
   | (Some key, Some src, Some dst) ->
-    let strip_0x s = match Stringext.chop_prefix ~prefix:"0x" s with
-      | None -> s
-      | Some x -> x in
+    let strip_0x s = match Astring.String.cut "0x" s with
+      | Some ("", x) -> x
+      | _ -> s in
     try
       let key = Nocrypto.Uncommon.Cs.of_hex (strip_0x key) in
       return (key, src, dst)
