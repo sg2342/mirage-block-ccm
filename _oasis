@@ -1,6 +1,6 @@
 OASISFormat: 0.4
 Name:        mirage-block-ccm
-Version:     1.0.0
+Version:     1.0.1
 Synopsis:    Mirgage AES-CCM block driver
 Authors:     Stefan Grundmann
 License:     ISC
