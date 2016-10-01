@@ -6,6 +6,5 @@ module Make (B: V1.BLOCK
      and type page_aligned_buffer = Cstruct.t
 
   val id : t -> B.t * string
-  val connect : ?maclen:int -> ?nonce_len:int -> key:Cstruct.t -> B.t ->
-    [`Ok of t | `Error of error] io
+  val connect : ?maclen:int -> ?nonce_len:int -> key:Cstruct.t -> B.t -> t io
 end
