@@ -78,6 +78,6 @@ type page_aligned_buffer = Cstruct.t
 
 let connect sz =
   let sz = match sz with | None -> size | Some x -> x in
-    let data = Cstruct.create sz in
-    if sz != 0 then Cstruct.blit_from_string (String.make sector_size (Char.chr 0)) 0 data 0 sector_size;
-    `Ok data |> return
+  let data = Cstruct.create sz in
+  if sz != 0 then Cstruct.blit_from_string (String.make sector_size (Char.chr 0)) 0 data 0 sector_size;
+  return data

@@ -118,5 +118,5 @@ module Make(B : V1_LWT.BLOCK) = struct
     let sector_len = raw_info.B.sector_size in
     let requiredPages = (sector_len * 2 - 1) / Io_page.page_size + 1 in
     let s = Io_page.get requiredPages |> Io_page.to_cstruct in
-    return (`Ok { raw; sector_len; sectors; k; s })
+    return ({ raw; sector_len; sectors; k; s })
 end

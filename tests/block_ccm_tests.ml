@@ -20,8 +20,8 @@ let sectors () =
 
 let write_one _ =
   let t =
-    Fake_block.connect None >>|= fun dev ->
-    CCM.connect ~key:(key `K16) dev >>|= fun ccm ->
+    Fake_block.connect None >>= fun dev ->
+    CCM.connect ~key:(key `K16) dev >>= fun ccm ->
     let s0,s1 = sectors () in
     CCM.write ccm 0L [s0; s1] >>|= fun () ->
     CCM.disconnect ccm >>= fun () ->
@@ -31,8 +31,8 @@ let write_one _ =
 
 let write_then_read _ =
   let t =
-    Fake_block.connect None >>|= fun dev ->
-    CCM.connect ~key:(key `K16) dev >>|= fun ccm ->
+    Fake_block.connect None >>= fun dev ->
+    CCM.connect ~key:(key `K16) dev >>= fun ccm ->
     let s0, s1 = sectors () in
     CCM.write ccm 0L [s0; s1] >>|= fun () ->
     CCM.read ccm 0L [s1; s0] >>|= fun () ->
@@ -43,9 +43,9 @@ let write_then_read _ =
 
 let fail_read _ =
   let t =
-    Fake_block.connect None >>|= fun dev ->
+    Fake_block.connect None >>= fun dev ->
     let maclen, nonce_len, key  = 8, 8, key `K32 in
-    CCM.connect ~nonce_len ~maclen ~key dev >>|= fun ccm ->
+    CCM.connect ~nonce_len ~maclen ~key dev >>= fun ccm ->
     let s0,_ = sectors () in
     CCM.read ccm 0L [s0] >>= fun r ->
     assert_equal r (`Error (`Unknown "decrypt error"));
@@ -56,8 +56,8 @@ let fail_read _ =
 
 let read_error _ =
   let t =
-    Fake_block.connect (Some 0) >>|= fun dev ->
-    CCM.connect ~key:(key `K16) dev >>|= fun ccm ->
+    Fake_block.connect (Some 0) >>= fun dev ->
+    CCM.connect ~key:(key `K16) dev >>= fun ccm ->
     Fake_block.disconnect dev >>= fun () ->
     let s0, _ = sectors () in
     CCM.read ccm 0L [s0] >>|=  return in
@@ -65,8 +65,8 @@ let read_error _ =
 
 let coverage _ =
   let t =
-    Fake_block.connect None >>|= fun dev ->
-    CCM.connect ~key:(key `K16) dev >>|= fun ccm ->
+    Fake_block.connect None >>= fun dev ->
+    CCM.connect ~key:(key `K16) dev >>= fun ccm ->
     CCM.get_info ccm >>= fun _ ->
     let _ = CCM.id ccm in
     return () in
