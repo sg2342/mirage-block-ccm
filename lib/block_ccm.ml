@@ -103,8 +103,6 @@ module Make(B : V1_LWT.BLOCK) = struct
   type error = B.error
   type id = (B.t * string)
 
-  let id eb = (eb.raw, "aes-ccm")
-
   type page_aligned_buffer = B.page_aligned_buffer
 
   let connect ?maclen ?nonce_len ~key raw =

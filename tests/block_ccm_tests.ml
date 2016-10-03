@@ -68,7 +68,6 @@ let coverage _ =
     Fake_block.connect None >>= fun dev ->
     CCM.connect ~key:(key `K16) dev >>= fun ccm ->
     CCM.get_info ccm >>= fun _ ->
-    let _ = CCM.id ccm in
     return () in
   Lwt_main.run t
 

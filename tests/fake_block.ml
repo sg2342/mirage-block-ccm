@@ -19,7 +19,6 @@ module A = Bigarray.Array1
 
 type +'a io = 'a Lwt.t
 type t = Cstruct.t
-type id = unit
 type error = [
   | `Unknown of string (** an undiagnosed error *)
   | `Unimplemented     (** operation not yet implemented in the code *)
