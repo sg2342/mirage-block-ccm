@@ -3,6 +3,6 @@ install: wget https://raw.githubusercontent.com/ocaml/ocaml-travisci-skeleton/ma
 script: bash -ex .travis-opam.sh
 sudo: required
 env:
-  - PACKAGE="mirage-block-ccm" OCAML_VERSION=latest OPAM_VERSION=1.2.0
+  - EXTRA_REMOTES="https://github.com/mirage/mirage-dev.git" PACKAGE="mirage-block-ccm" OCAML_VERSION=latest OPAM_VERSION=1.2.0
 notifications:
   email: false
