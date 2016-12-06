@@ -11,8 +11,8 @@ let key k =
   Nocrypto.Uncommon.Cs.of_hex s
 
 let (>>|=) m f = m >>= function
-  | `Ok x -> f x
-  | `Error e -> assert_equal e `Unimplemented; return ()
+  | Ok x -> f x
+  | Error e -> assert_equal e `Unimplemented; return ()
 
 let sectors () =
   let page = (Io_page.get 1  |> Io_page.to_cstruct) in
@@ -48,7 +48,7 @@ let fail_read _ =
     CCM.connect ~nonce_len ~maclen ~key dev >>= fun ccm ->
     let s0,_ = sectors () in
     CCM.read ccm 0L [s0] >>= fun r ->
-    assert_equal r (`Error (`Unknown "decrypt error"));
+    assert_equal r (Error (`Msg "decrypt error"));
     CCM.disconnect ccm >>= fun () ->
     Fake_block.disconnect dev >>= fun () ->
     return () in
