@@ -19,12 +19,7 @@ module A = Bigarray.Array1
 
 type +'a io = 'a Lwt.t
 type t = Cstruct.t
-type error = [
-  | `Unknown of string (** an undiagnosed error *)
-  | `Unimplemented     (** operation not yet implemented in the code *)
-  | `Is_read_only      (** you cannot write to a read/only instance *)
-  | `Disconnected      (** the device has been previously disconnected *)
-]
+type error = V1.Block.error
 
 let sector_size = 512
 
@@ -46,10 +41,10 @@ let write device sector_start buffers =
         Cstruct.blit x 0 device dstoff (Cstruct.len x);
         loop (dstoff + (Cstruct.len x)) xs in
   loop (safe_of_int64 sector_start * sector_size) buffers;
-  `Ok () |> return
+  Ok () |> return
 
 let read device sector_start buffers =
-  if 0 = (Cstruct.len device) then return (`Error `Unimplemented)
+  if 0 = (Cstruct.len device) then return (Error `Unimplemented)
   else
     let rec loop dstoff = function
       | [] -> ()
@@ -57,7 +52,7 @@ let read device sector_start buffers =
         Cstruct.blit device dstoff x 0 (Cstruct.len x);
         loop (dstoff + (Cstruct.len x)) xs in
     loop (safe_of_int64 sector_start * sector_size) buffers;
-    `Ok () |> return
+    Ok () |> return
 
 let info = {
   read_write = true;

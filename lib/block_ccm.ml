@@ -28,8 +28,8 @@ module Make(B : V1_LWT.BLOCK) = struct
     let key, maclen, nonce_len = kmn eb.k in
     let s0, s1 = s0s1 eb in
     B.read eb.raw (sector s) [s0; s1] >>= function
-    | `Error _ as e -> return e
-    | `Ok () ->
+    | Error _ as e -> return e
+    | Ok () ->
       let c, nonce, adata =
         Cstruct.(sub eb.s 0 (eb.sector_len + maclen),
                  sub eb.s (eb.sector_len + maclen) nonce_len,
@@ -38,8 +38,8 @@ module Make(B : V1_LWT.BLOCK) = struct
       match Nocrypto.Cipher_block.AES.CCM.decrypt ~key ~nonce ~adata c with
       | Some plain ->
         Cstruct.blit plain 0 buffer 0 eb.sector_len;
-        return (`Ok ())
-      | None -> return (`Error (`Unknown "decrypt error"))
+        return (Ok ())
+      | None -> return (Error (`Msg "decrypt error"))
 
   let write_internal eb s p =
     let key, maclen, nonce_len = kmn eb.k in
@@ -60,20 +60,20 @@ module Make(B : V1_LWT.BLOCK) = struct
     let do_buffer sector buffer =
       let len = Cstruct.len buffer in
       let rec loop_page s i =
-        if i = len then return (`OK ())
+        if i = len then return (Ok ())
         else (
           let page = Cstruct.sub buffer i eb.sector_len in
           fn s page >>= function
-          | `Error _ as e -> return e
-          | `Ok () -> loop_page (Int64.add s 1L) (i + eb.sector_len)
+          | Error _ as e -> return e
+          | Ok () -> loop_page (Int64.add s 1L) (i + eb.sector_len)
         ) in
       loop_page sector 0 in
     let rec loop s = function
-      | [] -> return (`Ok ())
+      | [] -> return (Ok ())
       | b :: bs ->
         do_buffer s b >>= function
-        | `Error _ as e -> return e
-        | `OK  () ->
+        | Error _ as e -> return e
+        | Ok  () ->
           loop (Int64.add s (Cstruct.len b / eb.sector_len |> Int64.of_int)) bs
     in
     loop sector_start buffers
