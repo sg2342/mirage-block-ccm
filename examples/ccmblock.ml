@@ -15,11 +15,11 @@ let opts = function
       with | Invalid_argument _ -> fail (Failure "invalid key")
 
 let (>>|=) m f = m >>= function
-  | `Error (`Unknown s) -> fail (Failure ("E:" ^ s))
-  | `Error `Disconnected -> fail (Failure ("E: `Disconnected"))
-  | `Error `Is_read_only -> fail (Failure ("E: `Is_read_only"))
-  | `Error `Unimplemented -> fail (Failure ("E: `Unimplemented"))
-  | `Ok x -> f x
+  | Error (`Msg s) -> fail (Failure ("E:" ^ s))
+  | Error `Disconnected -> fail (Failure ("E: `Disconnected"))
+  | Error `Is_read_only -> fail (Failure ("E: `Is_read_only"))
+  | Error `Unimplemented -> fail (Failure ("E: `Unimplemented"))
+  | Ok x -> f x
 
 let run t =
   try
@@ -62,11 +62,11 @@ let encrypt o =
   Nocrypto_entropy_unix.initialize ();
   let t =
     opts o >>= fun (key, src, dst) ->
-    Block.connect src >>|= fun src_dev ->
+    Block.connect src >>= fun src_dev ->
     Block.get_info src_dev >>= fun src_info ->
     let sectors = Block.(src_info.size_sectors) in
-    create_dst dst Int64.(mul 2L sectors) >>|= fun dst_dev ->
-    CCM.connect ~key dst_dev >>|= fun ccm_dev ->
+    create_dst dst Int64.(mul 2L sectors) >>= fun dst_dev ->
+    CCM.connect ~key dst_dev >>= fun ccm_dev ->
     copy (Block.read src_dev) (CCM.write ccm_dev) sectors >>= fun () ->
     disconnect ccm_dev dst_dev src_dev in
   run t
@@ -74,11 +74,11 @@ let encrypt o =
 let decrypt o =
   let t =
     opts o >>= fun (key, src, dst) ->
-    Block.connect src >>|= fun src_dev ->
-    CCM.connect ~key src_dev >>|= fun ccm_dev ->
+    Block.connect src >>= fun src_dev ->
+    CCM.connect ~key src_dev >>= fun ccm_dev ->
     CCM.get_info ccm_dev >>= fun ccm_info ->
     let sectors = CCM.(ccm_info.size_sectors) in
-    create_dst dst sectors >>|= fun dst_dev ->
+    create_dst dst sectors >>= fun dst_dev ->
     copy (CCM.read ccm_dev) (Block.write dst_dev) sectors >>= fun () ->
     disconnect ccm_dev dst_dev src_dev in
   run t
