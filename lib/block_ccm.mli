@@ -1,7 +1,7 @@
-module Make (B: V1.BLOCK
+module Make (B: Mirage_types.BLOCK
              with type 'a io = 'a Lwt.t
               and type page_aligned_buffer = Cstruct.t) : sig
-  include V1.BLOCK
+  include Mirage_types.BLOCK
     with type 'a io = 'a Lwt.t
      and type page_aligned_buffer = Cstruct.t
 
