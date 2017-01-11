@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 5d0dc84a451d9b81136fca98853d716d)
+# DO NOT EDIT (digest: 5654044c65cbca07e8389f21ff13950b)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -19,7 +19,8 @@ true: annot, bin_annot
 <lib/*.ml{,i,y}>: pkg_cstruct
 <lib/*.ml{,i,y}>: pkg_io-page
 <lib/*.ml{,i,y}>: pkg_lwt
-<lib/*.ml{,i,y}>: pkg_mirage-types-lwt
+<lib/*.ml{,i,y}>: pkg_mirage-block
+<lib/*.ml{,i,y}>: pkg_mirage-block-lwt
 <lib/*.ml{,i,y}>: pkg_nocrypto
 # Executable convert
 "examples/ccmblock.native": pkg_astring
@@ -29,8 +30,9 @@ true: annot, bin_annot
 "examples/ccmblock.native": pkg_io-page.unix
 "examples/ccmblock.native": pkg_lwt
 "examples/ccmblock.native": pkg_lwt.unix
+"examples/ccmblock.native": pkg_mirage-block
+"examples/ccmblock.native": pkg_mirage-block-lwt
 "examples/ccmblock.native": pkg_mirage-block-unix
-"examples/ccmblock.native": pkg_mirage-types-lwt
 "examples/ccmblock.native": pkg_nocrypto
 "examples/ccmblock.native": pkg_nocrypto.unix
 "examples/ccmblock.native": use_mirage_block_ccm
@@ -41,8 +43,9 @@ true: annot, bin_annot
 <examples/*.ml{,i,y}>: pkg_io-page.unix
 <examples/*.ml{,i,y}>: pkg_lwt
 <examples/*.ml{,i,y}>: pkg_lwt.unix
+<examples/*.ml{,i,y}>: pkg_mirage-block
+<examples/*.ml{,i,y}>: pkg_mirage-block-lwt
 <examples/*.ml{,i,y}>: pkg_mirage-block-unix
-<examples/*.ml{,i,y}>: pkg_mirage-types-lwt
 <examples/*.ml{,i,y}>: pkg_nocrypto
 <examples/*.ml{,i,y}>: pkg_nocrypto.unix
 <examples/*.ml{,i,y}>: use_mirage_block_ccm
@@ -54,7 +57,8 @@ true: annot, bin_annot
 "tests/testrunner.native": pkg_io-page.unix
 "tests/testrunner.native": pkg_lwt
 "tests/testrunner.native": pkg_lwt.unix
-"tests/testrunner.native": pkg_mirage-types-lwt
+"tests/testrunner.native": pkg_mirage-block
+"tests/testrunner.native": pkg_mirage-block-lwt
 "tests/testrunner.native": pkg_nocrypto
 "tests/testrunner.native": pkg_nocrypto.unix
 "tests/testrunner.native": pkg_oUnit
@@ -64,7 +68,8 @@ true: annot, bin_annot
 <tests/*.ml{,i,y}>: pkg_io-page.unix
 <tests/*.ml{,i,y}>: pkg_lwt
 <tests/*.ml{,i,y}>: pkg_lwt.unix
-<tests/*.ml{,i,y}>: pkg_mirage-types-lwt
+<tests/*.ml{,i,y}>: pkg_mirage-block
+<tests/*.ml{,i,y}>: pkg_mirage-block-lwt
 <tests/*.ml{,i,y}>: pkg_nocrypto
 <tests/*.ml{,i,y}>: pkg_nocrypto.unix
 <tests/*.ml{,i,y}>: pkg_oUnit

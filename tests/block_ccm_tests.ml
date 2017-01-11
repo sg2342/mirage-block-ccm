@@ -48,7 +48,7 @@ let fail_read _ =
     CCM.connect ~nonce_len ~maclen ~key dev >>= fun ccm ->
     let s0,_ = sectors () in
     CCM.read ccm 0L [s0] >>= fun r ->
-    assert_equal r (Error (`Msg "decrypt error"));
+    assert_equal r (Error `DecryptError);
     CCM.disconnect ccm >>= fun () ->
     Fake_block.disconnect dev >>= fun () ->
     return () in

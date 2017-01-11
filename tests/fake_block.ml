@@ -19,15 +19,14 @@ module A = Bigarray.Array1
 
 type +'a io = 'a Lwt.t
 type t = Cstruct.t
-type error = Mirage_types.Block.error
+type error = [ Mirage_block.error | `DecryptError ]
+let pp_error pp = function
+  | #Mirage_block.error as err -> Mirage_block.pp_error pp err
+  | `DecryptError -> Format.fprintf pp "decrypt error"
+type write_error = Mirage_block.write_error
+let pp_write_error = Mirage_block.pp_write_error
 
 let sector_size = 512
-
-type info = {
-  read_write: bool;    (** True if we can write, false if read/only *)
-  sector_size: int;    (** Octets per sector *)
-  size_sectors: int64; (** Total sectors per device *)
-}
 
 let safe_of_int64 i64 =
   let i = Int64.to_int i64 in
@@ -55,12 +54,12 @@ let read device sector_start buffers =
     Ok () |> return
 
 let info = {
-  read_write = true;
+  Mirage_block.read_write = true;
   sector_size;
   size_sectors = 64L;
 }
 
-let size = info.sector_size * safe_of_int64 info.size_sectors
+let size = info.Mirage_block.sector_size * safe_of_int64 info.Mirage_block.size_sectors
 
 let get_info _device = return info
 
