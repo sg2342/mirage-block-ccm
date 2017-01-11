@@ -1,6 +1,6 @@
 open Lwt
 
-module Make(B : V1_LWT.BLOCK) = struct
+module Make(B : Mirage_types_lwt.BLOCK) = struct
 
   type key = { key       : Nocrypto.Cipher_block.AES.CCM.key;
                maclen    : int;

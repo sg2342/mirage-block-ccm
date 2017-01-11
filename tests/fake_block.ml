@@ -19,7 +19,7 @@ module A = Bigarray.Array1
 
 type +'a io = 'a Lwt.t
 type t = Cstruct.t
-type error = V1.Block.error
+type error = Mirage_types.Block.error
 
 let sector_size = 512
 

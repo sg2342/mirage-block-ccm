@@ -1,9 +1,9 @@
 ## mirage-block-ccm
 [![Build Status](https://travis-ci.org/sg2342/mirage-block-ccm.svg?branch=master)](https://travis-ci.org/sg2342/mirage-block-ccm)
 
-AES-CCM encrypted Mirage V1.BLOCK storage
+AES-CCM encrypted Mirage Mirage_types.BLOCK storage
 
-uses two sectors of the underlying V1.BLOCK per provided sector:
+uses two sectors of the underlying Mirage_types.BLOCK per provided sector:
 
 ```
 +-----------------------------------+
