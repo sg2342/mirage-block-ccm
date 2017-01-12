@@ -1,8 +1,8 @@
 module Make (B: Mirage_block_lwt.S) : sig
 
-  type error = private [> Mirage_device.error | `DecryptError ]
+  type error = [ Mirage_device.error | `DecryptError ]
 
-  type write_error = private [> Mirage_device.error | `Is_read_only]
+  type write_error = Mirage_block.write_error
 
   include Mirage_block_lwt.S
     with type error := error
