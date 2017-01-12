@@ -21,7 +21,7 @@ module Make(B : Mirage_block_lwt.S) = struct
 
   type error = [ Mirage_device.error | `DecryptError ]
 
-  type write_error = [ Mirage_device.error | `Is_read_only]
+  type write_error = Mirage_block.write_error
 
   let pp_error pp = function
     | #Mirage_block.error as e -> Mirage_device.pp_error pp e
@@ -68,8 +68,7 @@ module Make(B : Mirage_block_lwt.S) = struct
              blit c eb.sector_len s1 0 maclen;
              blit fill 0 s1 maclen (eb.sector_len - maclen));
     BLOCK.write eb.raw (sector s) [s0; s1] >>= function
-    | Error (#Mirage_device.error as err) -> return (Error err)
-    | Error `Is_read_only -> return (Error `Is_read_only)
+    | Error (#Mirage_block.write_error as err) -> return (Error err)
     | Ok () -> return (Ok ())
 
   (** Call [fn sector page] for each page in each buffer. *)
