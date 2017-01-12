@@ -1,9 +1,12 @@
-module Make (B: Mirage_types.BLOCK
-             with type 'a io = 'a Lwt.t
-              and type page_aligned_buffer = Cstruct.t) : sig
-  include Mirage_types.BLOCK
-    with type 'a io = 'a Lwt.t
-     and type page_aligned_buffer = Cstruct.t
+module Make (B: Mirage_block_lwt.S) : sig
 
-  val connect : ?maclen:int -> ?nonce_len:int -> key:Cstruct.t -> B.t -> t io
+  type error = private [> Mirage_device.error | `DecryptError ]
+
+  type write_error = private [> Mirage_device.error | `Is_read_only]
+
+  include Mirage_block_lwt.S
+    with type error := error
+     and type write_error := write_error
+
+  val connect : ?maclen:int -> ?nonce_len:int -> key:Cstruct.t -> B.t -> t Lwt.t
 end

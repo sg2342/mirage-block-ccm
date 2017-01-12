@@ -1,20 +1,35 @@
 open Lwt
 
-module Make(B : Mirage_types_lwt.BLOCK) = struct
+module Make(B : Mirage_block_lwt.S) = struct
+
+  module BLOCK = B
 
   type key = { key       : Nocrypto.Cipher_block.AES.CCM.key;
                maclen    : int;
                nonce_len : int
              }
 
-  type t = { raw        : B.t;
+  type t = { raw        : BLOCK.t;
              k          : key;
              sector_len : int;
              sectors    : int64;
              s          : Cstruct.t
            }
 
-  let disconnect eb = B.disconnect eb.raw
+  type page_aligned_buffer = BLOCK.page_aligned_buffer
+  type +'a io = 'a Lwt.t
+
+  type error = [ Mirage_device.error | `DecryptError ]
+
+  type write_error = [ Mirage_device.error | `Is_read_only]
+
+  let pp_error pp = function
+    | #Mirage_block.error as e -> Mirage_device.pp_error pp e
+    | `DecryptError -> Format.fprintf pp "decrypt error"
+
+  let pp_write_error = Mirage_block.pp_write_error
+
+  let disconnect eb = BLOCK.disconnect eb.raw
 
   let s0s1 eb =
     Cstruct.(sub eb.s 0 eb.sector_len,
@@ -27,8 +42,8 @@ module Make(B : Mirage_types_lwt.BLOCK) = struct
   let read_internal eb s buffer =
     let key, maclen, nonce_len = kmn eb.k in
     let s0, s1 = s0s1 eb in
-    B.read eb.raw (sector s) [s0; s1] >>= function
-    | Error _ as e -> return e
+    BLOCK.read eb.raw (sector s) [s0; s1] >>= function
+    | Error (#Mirage_block.error as e) -> return (Error e)
     | Ok () ->
       let c, nonce, adata =
         Cstruct.(sub eb.s 0 (eb.sector_len + maclen),
@@ -39,7 +54,7 @@ module Make(B : Mirage_types_lwt.BLOCK) = struct
       | Some plain ->
         Cstruct.blit plain 0 buffer 0 eb.sector_len;
         return (Ok ())
-      | None -> return (Error (`Msg "decrypt error"))
+      | None -> return (Error `DecryptError)
 
   let write_internal eb s p =
     let key, maclen, nonce_len = kmn eb.k in
@@ -52,8 +67,10 @@ module Make(B : Mirage_types_lwt.BLOCK) = struct
     Cstruct.(blit c 0 s0 0 eb.sector_len;
              blit c eb.sector_len s1 0 maclen;
              blit fill 0 s1 maclen (eb.sector_len - maclen));
-    B.write eb.raw (sector s) [s0; s1]
-
+    BLOCK.write eb.raw (sector s) [s0; s1] >>= function
+    | Error (#Mirage_device.error as err) -> return (Error err)
+    | Error `Is_read_only -> return (Error `Is_read_only)
+    | Ok () -> return (Ok ())
 
   (** Call [fn sector page] for each page in each buffer. *)
   let each_page eb sector_start buffers fn =
@@ -79,41 +96,29 @@ module Make(B : Mirage_types_lwt.BLOCK) = struct
     loop sector_start buffers
 
   let read eb sector_start buffers =
-    each_page eb sector_start buffers (fun sector page ->
-        read_internal eb sector page )
+    each_page eb sector_start buffers (read_internal eb)
 
   let write eb sector_start buffers =
-    each_page eb sector_start buffers (fun sector page ->
-        write_internal eb sector page )
-
-  type info = {read_write   : bool;
-               sector_size  : int;
-               size_sectors : int64
-              }
+    each_page eb sector_start buffers (write_internal eb)
 
   let get_info eb =
-    B.get_info eb.raw >>= fun raw_info ->
+    BLOCK.get_info eb.raw >>= fun raw_info ->
     return {
-      read_write = raw_info.B.read_write;
-      sector_size = raw_info.B.sector_size;
+      Mirage_block.read_write = raw_info.Mirage_block.read_write;
+      sector_size = raw_info.Mirage_block.sector_size;
       size_sectors = eb.sectors;
     }
 
-  type 'a io = 'a B.io
-  type error = B.error
-  type id = (B.t * string)
-
-  type page_aligned_buffer = B.page_aligned_buffer
 
   let connect ?maclen ?nonce_len ~key raw =
-    B.get_info raw >>= fun raw_info ->
+    BLOCK.get_info raw >>= fun raw_info ->
     let maclen = match maclen with | None -> 8 | Some x -> x in
     let nonce_len = match nonce_len with | None -> 8 | Some x -> x in
     let key = Nocrypto.Cipher_block.AES.CCM.of_secret ~maclen key in
-    assert(raw_info.B.sector_size > (( maclen + nonce_len) * 2));
+    assert(raw_info.Mirage_block.sector_size > (( maclen + nonce_len) * 2));
     let k = {key; maclen; nonce_len} in
-    let sectors = Int64.div raw_info.B.size_sectors 2L in
-    let sector_len = raw_info.B.sector_size in
+    let sectors = Int64.div raw_info.Mirage_block.size_sectors 2L in
+    let sector_len = raw_info.Mirage_block.sector_size in
     let requiredPages = (sector_len * 2 - 1) / Io_page.page_size + 1 in
     let s = Io_page.get requiredPages |> Io_page.to_cstruct in
     return ({ raw; sector_len; sectors; k; s })

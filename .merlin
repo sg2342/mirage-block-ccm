@@ -7,9 +7,9 @@ B _Build/examles
 B _Build/tests
 
 PKG lwt
-PKG lwt.syntax
 PKG mirage
-PKG mirage-types
+PKG mirage-block
+PKG mirage-block-lwt
 PKG mirage-block-unix
 PKG mirage-unix
 PKG cstruct

@@ -12,7 +12,7 @@ Library mirage_block_ccm
  Path:               lib
  Findlibname:        mirage-block-ccm
  Modules:            Block_ccm
- BuildDepends:       cstruct, lwt, nocrypto, mirage-types-lwt, io-page
+ BuildDepends:       cstruct, lwt, nocrypto, mirage-block, mirage-block-lwt, io-page
 
 Flag examples
  Description    : example programs.
