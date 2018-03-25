@@ -1,4 +1,4 @@
-open Lwt
+open Lwt.Infix
 
 module Make(B : Mirage_block_lwt.S) = struct
 
@@ -43,7 +43,7 @@ module Make(B : Mirage_block_lwt.S) = struct
     let key, maclen, nonce_len = kmn eb.k in
     let s0, s1 = s0s1 eb in
     BLOCK.read eb.raw (sector s) [s0; s1] >>= function
-    | Error (#Mirage_block.error as e) -> return (Error e)
+    | Error (#Mirage_block.error as e) -> Lwt.return (Error e)
     | Ok () ->
       let c, nonce, adata =
         Cstruct.(sub eb.s 0 (eb.sector_len + maclen),
@@ -53,8 +53,8 @@ module Make(B : Mirage_block_lwt.S) = struct
       match Nocrypto.Cipher_block.AES.CCM.decrypt ~key ~nonce ~adata c with
       | Some plain ->
         Cstruct.blit plain 0 buffer 0 eb.sector_len;
-        return (Ok ())
-      | None -> return (Error `DecryptError)
+        Lwt.return (Ok ())
+      | None -> Lwt.return (Error `DecryptError)
 
   let write_internal eb s p =
     let key, maclen, nonce_len = kmn eb.k in
@@ -68,27 +68,27 @@ module Make(B : Mirage_block_lwt.S) = struct
              blit c eb.sector_len s1 0 maclen;
              blit fill 0 s1 maclen (eb.sector_len - maclen));
     BLOCK.write eb.raw (sector s) [s0; s1] >>= function
-    | Error (#Mirage_block.write_error as err) -> return (Error err)
-    | Ok () -> return (Ok ())
+    | Error (#Mirage_block.write_error as err) -> Lwt.return (Error err)
+    | Ok () -> Lwt.return (Ok ())
 
   (** Call [fn sector page] for each page in each buffer. *)
   let each_page eb sector_start buffers fn =
     let do_buffer sector buffer =
       let len = Cstruct.len buffer in
       let rec loop_page s i =
-        if i = len then return (Ok ())
+        if i = len then Lwt.return (Ok ())
         else (
           let page = Cstruct.sub buffer i eb.sector_len in
           fn s page >>= function
-          | Error _ as e -> return e
+          | Error _ as e -> Lwt.return e
           | Ok () -> loop_page (Int64.add s 1L) (i + eb.sector_len)
         ) in
       loop_page sector 0 in
     let rec loop s = function
-      | [] -> return (Ok ())
+      | [] -> Lwt.return (Ok ())
       | b :: bs ->
         do_buffer s b >>= function
-        | Error _ as e -> return e
+        | Error _ as e -> Lwt.return e
         | Ok  () ->
           loop (Int64.add s (Cstruct.len b / eb.sector_len |> Int64.of_int)) bs
     in
@@ -102,7 +102,7 @@ module Make(B : Mirage_block_lwt.S) = struct
 
   let get_info eb =
     BLOCK.get_info eb.raw >>= fun raw_info ->
-    return {
+    Lwt.return {
       Mirage_block.read_write = raw_info.Mirage_block.read_write;
       sector_size = raw_info.Mirage_block.sector_size;
       size_sectors = eb.sectors;
@@ -120,5 +120,5 @@ module Make(B : Mirage_block_lwt.S) = struct
     let sector_len = raw_info.Mirage_block.sector_size in
     let requiredPages = (sector_len * 2 - 1) / Io_page.page_size + 1 in
     let s = Io_page.get requiredPages |> Io_page.to_cstruct in
-    return ({ raw; sector_len; sectors; k; s })
+    Lwt.return ({ raw; sector_len; sectors; k; s })
 end
