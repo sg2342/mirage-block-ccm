@@ -1,20 +1,39 @@
-opam-version: "1.2"
+opam-version: "2.0"
 name:         "mirage-block-ccm"
 homepage:     "https://github.com/sg2342/mirage-block-ccm"
-dev-repo:     "https://github.com/sg2342/mirage-block-ccm.git"
+dev-repo:     "git+https://github.com/sg2342/mirage-block-ccm.git"
 bug-reports:  "https://github.com/sg2342/mirage-block-ccm/issues"
 author:       ["Stefan Grundmann <sg2342@googlemail.com>"]
 maintainer:   ["Stefan Grundmann <sg2342@googlemail.com>"]
 license:      "ISC"
+synopsis:     "AES-CCM encrypted Mirage Mirage_types.BLOCK storage"
+description: """
+AES-CCM encrypted Mirage Mirage_types.BLOCK storage
+
+uses two sectors of the underlying Mirage_types.BLOCK per provided sector:
+
+```
++-----------------------------------+
+| CT                | nonce | adata |
++-----------------+-----------------+
+| sector n        | sector n+1      |
++-----------------+-----------------+
+```
+
+- `CT` is `sector_size + maclen` bytes AES-CCM ciphertext
+- `nonce` is `nonce_len` bytes random nonce
+- `adata` is `sector_size - nonce_len - maclen` random additional authenticated data
+"""
 
 build: [
   ["ocaml" "setup.ml" "-configure" "--prefix" prefix]
   ["ocaml" "setup.ml" "-build"]
+  [ "./configure" "--%{ounit:enable}%-tests" "--%{bisect:enable}%-coverage" ] {with-test}
+  [ make "cover_test" ] {with-test}
 ]
-install: [ make "install" ]
-remove: ["ocamlfind" "remove" "mirage-block-ccm"]
 
 depends: [
+  "ocaml" {>= "4.02.0"}
   "ocamlfind" {build}
   "cstruct" {>= "1.0.1"}
   "lwt" {>= "2.4.3"}
@@ -22,12 +41,6 @@ depends: [
   "mirage-block-lwt" {>= "1.0.0"}
   "nocrypto" {>= "0.5.1"}
   "io-page" {>= "1.0.0"}
-  "ounit" {test}
-  "bisect" {test}
+  "ounit" {with-test}
+  "bisect" {with-test}
 ]
-
-build-test: [
-  [ "./configure" "--%{ounit:enable}%-tests" "--%{bisect:enable}%-coverage" ]
-  [ make "cover_test" ] ]
-
-available: [ocaml-version > "4.02.0"]
