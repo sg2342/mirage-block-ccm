@@ -1,0 +1,5 @@
+(executable
+ (name ccmblock)
+ (public_name ccmblock)
+ (libraries mirage-block-ccm astring cmdliner lwt.unix mirage-block-unix
+   mirage-crypto-rng.unix))
