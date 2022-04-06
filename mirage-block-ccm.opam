@@ -38,7 +38,10 @@ depends: [
   "lwt" {>= "2.4.3"}
   "mirage-block" {>= "2.0.0"}
   "mirage-crypto"
-  "cmdliner" {>= "1.1.0"}
+  "mirage-crypto-rng"
   "ounit2" {with-test}
   "bisect_ppx" {dev}
+  "cmdliner" {dev & >= "1.1.0"}
+  "astring" {dev}
+  "mirage-block-unix" {dev}
 ]
