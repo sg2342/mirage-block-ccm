@@ -15,9 +15,6 @@
 
 open Lwt
 
-module A = Bigarray.Array1
-
-type +'a io = 'a Lwt.t
 type t = Cstruct.t
 type error = [ Mirage_block.error | `DecryptError ]
 let pp_error pp = function
@@ -37,19 +34,19 @@ let write device sector_start buffers =
   let rec loop dstoff = function
     | [] -> ()
     | x :: xs ->
-        Cstruct.blit x 0 device dstoff (Cstruct.len x);
-        loop (dstoff + (Cstruct.len x)) xs in
+        Cstruct.blit x 0 device dstoff (Cstruct.length x);
+        loop (dstoff + (Cstruct.length x)) xs in
   loop (safe_of_int64 sector_start * sector_size) buffers;
   Ok () |> return
 
 let read device sector_start buffers =
-  if 0 = (Cstruct.len device) then return (Error `Unimplemented)
+  if 0 = (Cstruct.length device) then return (Error `Disconnected)
   else
     let rec loop dstoff = function
       | [] -> ()
       | x :: xs ->
-        Cstruct.blit device dstoff x 0 (Cstruct.len x);
-        loop (dstoff + (Cstruct.len x)) xs in
+        Cstruct.blit device dstoff x 0 (Cstruct.length x);
+        loop (dstoff + (Cstruct.length x)) xs in
     loop (safe_of_int64 sector_start * sector_size) buffers;
     Ok () |> return
 

@@ -1,0 +1,47 @@
+opam-version: "2.0"
+name:         "mirage-block-ccm"
+homepage:     "https://github.com/sg2342/mirage-block-ccm"
+dev-repo:     "git+https://github.com/sg2342/mirage-block-ccm.git"
+bug-reports:  "https://github.com/sg2342/mirage-block-ccm/issues"
+author:       ["Stefan Grundmann <sg2342@googlemail.com>"]
+maintainer:   ["Stefan Grundmann <sg2342@googlemail.com>"]
+license:      "ISC"
+synopsis:     "AES-CCM encrypted Mirage Mirage_types.BLOCK storage"
+description: """
+AES-CCM encrypted Mirage Mirage_types.BLOCK storage
+
+uses two sectors of the underlying Mirage_types.BLOCK per provided sector:
+
+```
++-----------------------------------+
+| CT                | nonce | adata |
++-----------------+-----------------+
+| sector n        | sector n+1      |
++-----------------+-----------------+
+```
+
+- `CT` is `sector_size + maclen` bytes AES-CCM ciphertext
+- `nonce` is `nonce_len` bytes random nonce
+- `adata` is `sector_size - nonce_len - maclen` random additional authenticated data
+"""
+
+build: [
+  ["dune" "subst"] {dev}
+  ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "runtest" "-p" name "-j" jobs] {with-test}
+]
+
+depends: [
+  "ocaml" {>= "4.08.0"}
+  "dune" {>= "2.7.0"}
+  "cstruct" {>= "6.0.0"}
+  "lwt" {>= "2.4.3"}
+  "mirage-block" {>= "2.0.0"}
+  "mirage-crypto"
+  "mirage-crypto-rng"
+  "ounit2" {with-test}
+  "bisect_ppx" {dev}
+  "cmdliner" {dev & >= "1.1.0"}
+  "astring" {dev}
+  "mirage-block-unix" {dev}
+]

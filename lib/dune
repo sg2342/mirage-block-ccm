@@ -1,0 +1,7 @@
+(library
+ (name block_ccm)
+ (public_name mirage-block-ccm)
+ (libraries cstruct mirage-crypto lwt mirage-block mirage-crypto-rng)
+ (wrapped false)
+ (instrumentation
+  (backend bisect_ppx)))

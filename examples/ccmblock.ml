@@ -1,25 +1,34 @@
-open Lwt
+open Lwt.Infix
 
 module CCM = Block_ccm.Make(Block)
 
 let opts = function
   | (None, _, _) | (_, None, _) | (_, _, None) ->
-    fail (Failure "Key In and Out required")
+    Lwt.fail (Failure "Key In and Out required")
   | (Some key, Some src, Some dst) ->
-    let strip_0x s = match Astring.String.cut "0x" s with
+    let strip_0x s = match Astring.String.cut ~sep:"0x" s with
       | Some ("", x) -> x
       | _ -> s in
     try
-      let key = Nocrypto.Uncommon.Cs.of_hex (strip_0x key) in
-      return (key, src, dst)
-      with | Invalid_argument _ -> fail (Failure "invalid key")
+      let key = Cstruct.of_hex (strip_0x key) in
+      Lwt.return (key, src, dst)
+      with | Invalid_argument _ -> Lwt.fail (Failure "invalid key")
 
-let (>>|=) m f = m >>= function
-  | Error (`Msg s) -> fail (Failure ("E:" ^ s))
-  | Error `Disconnected -> fail (Failure ("E: `Disconnected"))
-  | Error `Is_read_only -> fail (Failure ("E: `Is_read_only"))
-  | Error `Unimplemented -> fail (Failure ("E: `Unimplemented"))
-  | Ok x -> f x
+let unix_err = function
+  | Error e -> Lwt.fail_with (Fmt.to_to_string Block.pp_error e)
+  | Ok () -> Lwt.return_unit
+
+let unix_write_err = function
+  | Error e -> Lwt.fail_with (Fmt.to_to_string Block.pp_write_error e)
+  | Ok () -> Lwt.return_unit
+
+let ccm_err = function
+  | Error e -> Lwt.fail_with (Fmt.to_to_string CCM.pp_error e)
+  | Ok () -> Lwt.return_unit
+
+let ccm_write_err = function
+  | Error e -> Lwt.fail_with (Fmt.to_to_string CCM.pp_write_error e)
+  | Ok () -> Lwt.return_unit
 
 let run t =
   try
@@ -28,9 +37,7 @@ let run t =
   with
   | Failure x -> `Error(false, x)
 
-let sector () =
-  let page = (Io_page.get 1  |> Io_page.to_cstruct) in
-  Cstruct.sub page 0 512
+let sector () = Cstruct.create 512
 
 let create_dst fn sectors =
   let open Lwt_unix in
@@ -46,28 +53,32 @@ let disconnect ccm_dev dst_dev src_dev =
   CCM.disconnect ccm_dev >>= fun () ->
   Block.disconnect dst_dev >>= fun () ->
   Block.disconnect src_dev >>= fun () ->
-  return ()
+  Lwt.return ()
 
-let rec copy readf writef count =
+let copy (readf, err) (writef, write_err) count =
   let sector = sector () in
   let rec aux offset = function
-    | 0L -> return ()
+    | 0L -> Lwt.return ()
     | remaining ->
-      readf offset [sector] >>|= fun () ->
-      writef offset [sector] >>|= fun () ->
-      aux Int64.(add offset 1L) Int64.(sub remaining 1L) in
+      readf offset [sector] >>= err >>= fun () ->
+      writef offset [sector] >>= write_err >>= fun () ->
+      aux Int64.(add offset 1L) Int64.(sub remaining 1L)
+  in
   aux 0L count
 
 let encrypt o =
-  Nocrypto_entropy_unix.initialize ();
+  Mirage_crypto_rng_unix.initialize ();
   let t =
     opts o >>= fun (key, src, dst) ->
     Block.connect src >>= fun src_dev ->
     Block.get_info src_dev >>= fun src_info ->
-    let sectors = Block.(src_info.size_sectors) in
+    let sectors = src_info.size_sectors in
     create_dst dst Int64.(mul 2L sectors) >>= fun dst_dev ->
     CCM.connect ~key dst_dev >>= fun ccm_dev ->
-    copy (Block.read src_dev) (CCM.write ccm_dev) sectors >>= fun () ->
+    copy
+      (Block.read src_dev, unix_err)
+      (CCM.write ccm_dev, ccm_write_err)
+      sectors >>= fun () ->
     disconnect ccm_dev dst_dev src_dev in
   run t
 
@@ -77,9 +88,12 @@ let decrypt o =
     Block.connect src >>= fun src_dev ->
     CCM.connect ~key src_dev >>= fun ccm_dev ->
     CCM.get_info ccm_dev >>= fun ccm_info ->
-    let sectors = CCM.(ccm_info.size_sectors) in
+    let sectors = ccm_info.size_sectors in
     create_dst dst sectors >>= fun dst_dev ->
-    copy (CCM.read ccm_dev) (Block.write dst_dev) sectors >>= fun () ->
+    copy
+      (CCM.read ccm_dev, ccm_err)
+      (Block.write dst_dev, unix_write_err)
+      sectors >>= fun () ->
     disconnect ccm_dev dst_dev src_dev in
   run t
 
@@ -110,7 +124,7 @@ let common_options_t =
     Arg.(value & opt (some string) None & info ["o"; "out"]
            ~docv:"dst.img" ~doc ~docs) in
   let make i_k i_s i_d = (i_k, i_s, i_d) in
-  Term.(pure make $ i_k $ i_s $ i_d)
+  Term.(const make $ i_k $ i_s $ i_d)
 
 let enc_cmd =
   let doc = "encrypt plain disc image" in
@@ -118,7 +132,10 @@ let enc_cmd =
     `S "DESCRIPTION";
     `P "Create AES-CCM disk image. The destination image will twice as large as
         the source image"] in
-  Term.(ret (pure encrypt $ common_options_t)), Term.info "enc" ~doc ~man
+  let term = Term.(ret (const encrypt $ common_options_t))
+  and info = Cmd.info "enc" ~doc ~man
+  in
+  Cmd.v info term
 
 let dec_cmd =
   let doc = "decrypt AES-CCM disc image" in
@@ -126,15 +143,19 @@ let dec_cmd =
     `S "DESCRIPTION";
     `P "Create plain disk image. The destination image will half as large as
         the source image"] in
-  Term.(ret (pure decrypt $ common_options_t)), Term.info "dec" ~doc ~man
-
-let default_cmd =
-  let doc = "convert plain disc images from/to AES-CCM encrypted images" in
-  let man = help_secs in
-  Term.(ret (pure (fun _ -> `Help (`Pager, None)) $ common_options_t)),
-  Term.info "ccmblock" ~sdocs:copts_sect ~doc ~man
+  let term = Term.(ret (const decrypt $ common_options_t))
+  and info = Cmd.info "dec" ~doc ~man
+  in
+  Cmd.v info term
 
 let cmds = [enc_cmd; dec_cmd]
 
-let () = match Term.eval_choice default_cmd cmds with
-  | `Error _ -> exit 1 | _ -> exit 0
+let help_cmd =
+  Term.(ret (const (fun _ -> `Help (`Pager, None)) $ common_options_t))
+
+let () =
+  let doc = "convert plain disc images from/to AES-CCM encrypted images" in
+  let man = help_secs in
+  let info = Cmd.info "ccmblock" ~sdocs:copts_sect ~doc ~man in
+  let group = Cmd.group ~default:help_cmd info cmds in
+  exit (Cmd.eval group)

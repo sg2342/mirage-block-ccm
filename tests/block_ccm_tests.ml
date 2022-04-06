@@ -1,5 +1,5 @@
 open OUnit2
-open Lwt
+open Lwt.Infix
 
 module CCM = Block_ccm.Make(Fake_block)
 
@@ -8,15 +8,14 @@ let key k =
     | `K16 -> "00112233445566778899aabbccddeeff"
     | `K32 -> "00112233445566778899aabbccddeeff" ^
               "00112233445566778899aabbccddeeff" in
-  Nocrypto.Uncommon.Cs.of_hex s
+  Cstruct.of_hex s
 
 let (>>|=) m f = m >>= function
   | Ok x -> f x
-  | Error e -> assert_equal e `Unimplemented; return ()
+  | Error e -> assert_equal e `Disconnected; Lwt.return ()
 
 let sectors () =
-  let page = (Io_page.get 1  |> Io_page.to_cstruct) in
-  Cstruct.(sub page 0 512, sub page 512 1024)
+  Cstruct.(create 512, create 512)
 
 let write_one _ =
   let t =
@@ -26,7 +25,7 @@ let write_one _ =
     CCM.write ccm 0L [s0; s1] >>|= fun () ->
     CCM.disconnect ccm >>= fun () ->
     Fake_block.disconnect dev >>= fun () ->
-    return () in
+    Lwt.return () in
   Lwt_main.run t
 
 let write_then_read _ =
@@ -38,7 +37,7 @@ let write_then_read _ =
     CCM.read ccm 0L [s1; s0] >>|= fun () ->
     CCM.disconnect ccm >>= fun () ->
     Fake_block.disconnect dev >>= fun () ->
-    return () in
+    Lwt.return () in
   Lwt_main.run t
 
 let fail_read _ =
@@ -51,7 +50,7 @@ let fail_read _ =
     assert_equal r (Error `DecryptError);
     CCM.disconnect ccm >>= fun () ->
     Fake_block.disconnect dev >>= fun () ->
-    return () in
+    Lwt.return () in
   Lwt_main.run t
 
 let read_error _ =
@@ -60,7 +59,7 @@ let read_error _ =
     CCM.connect ~key:(key `K16) dev >>= fun ccm ->
     Fake_block.disconnect dev >>= fun () ->
     let s0, _ = sectors () in
-    CCM.read ccm 0L [s0] >>|=  return in
+    CCM.read ccm 0L [s0] >>|= Lwt.return in
   Lwt_main.run t
 
 let coverage _ =
@@ -68,7 +67,7 @@ let coverage _ =
     Fake_block.connect None >>= fun dev ->
     CCM.connect ~key:(key `K16) dev >>= fun ccm ->
     CCM.get_info ccm >>= fun _ ->
-    return () in
+    Lwt.return () in
   Lwt_main.run t
 
 let suite =
