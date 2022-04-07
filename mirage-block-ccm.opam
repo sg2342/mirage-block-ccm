@@ -37,11 +37,11 @@ depends: [
   "cstruct" {>= "6.0.0"}
   "lwt" {>= "2.4.3"}
   "mirage-block" {>= "2.0.0"}
-  "mirage-crypto"
+  "mirage-crypto" {>= "0.8.1"}
   "mirage-crypto-rng"
   "ounit2" {with-test}
   "bisect_ppx" {dev}
-  "cmdliner" {dev & >= "1.1.0"}
-  "astring" {dev}
-  "mirage-block-unix" {dev}
+  "cmdliner" {>= "1.1.0"}
+  "astring"
+  "mirage-block-unix"
 ]
