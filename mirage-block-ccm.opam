@@ -45,3 +45,7 @@ depends: [
   "astring"
   "mirage-block-unix"
 ]
+post-messages: [
+  "Any block device created with an earlier (< 0.2.0) version and the default
+   maclen (8) can no longer be decrypted. The maclen is now 16."
+]
