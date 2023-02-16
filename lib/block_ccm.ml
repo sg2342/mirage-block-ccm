@@ -2,8 +2,7 @@ open Lwt.Infix
 
 module Make(BLOCK : Mirage_block.S) = struct
 
-  type key = { key       : Mirage_crypto.Cipher_block.AES.CCM.key;
-               maclen    : int;
+  type key = { key       : Mirage_crypto.Cipher_block.AES.CCM16.key;
                nonce_len : int
              }
 
@@ -33,12 +32,13 @@ module Make(BLOCK : Mirage_block.S) = struct
     Cstruct.(sub eb.s 0 eb.sector_len,
              sub eb.s eb.sector_len eb.sector_len)
 
-  let kmn { key; maclen; nonce_len } = key, maclen, nonce_len
+  let kn { key; nonce_len } = key, nonce_len
 
   let sector = Int64.mul 2L
 
   let read_internal eb s buffer =
-    let key, maclen, nonce_len = kmn eb.k in
+    let key, nonce_len = kn eb.k in
+    let maclen = Mirage_crypto.Cipher_block.AES.CCM16.tag_size in
     let s0, s1 = s0s1 eb in
     BLOCK.read eb.raw (sector s) [s0; s1] >>= function
     | Error (#Mirage_block.error as e) -> Lwt.return (Error e)
@@ -49,19 +49,20 @@ module Make(BLOCK : Mirage_block.S) = struct
                  sub eb.s (eb.sector_len + maclen) nonce_len,
                  sub eb.s (eb.sector_len + maclen + nonce_len)
                    (eb.sector_len - maclen - nonce_len)) in
-      match Mirage_crypto.Cipher_block.AES.CCM.authenticate_decrypt ~key ~nonce ~adata c with
+      match Mirage_crypto.Cipher_block.AES.CCM16.authenticate_decrypt ~key ~nonce ~adata c with
       | Some plain ->
         Cstruct.blit plain 0 buffer 0 eb.sector_len;
         Lwt.return (Ok ())
       | None -> Lwt.return (Error `DecryptError)
 
   let write_internal eb s p =
-    let key, maclen, nonce_len = kmn eb.k in
+    let key, nonce_len = kn eb.k in
+    let maclen = Mirage_crypto.Cipher_block.AES.CCM16.tag_size in
     let fill = Mirage_crypto_rng.generate (eb.sector_len - maclen) in
     let nonce, adata =
       Cstruct.(sub fill 0 nonce_len,
                sub fill nonce_len (eb.sector_len - maclen - nonce_len)) in
-    let c = Mirage_crypto.Cipher_block.AES.CCM.authenticate_encrypt ~key ~nonce ~adata p in
+    let c = Mirage_crypto.Cipher_block.AES.CCM16.authenticate_encrypt ~key ~nonce ~adata p in
     let s0,s1 = s0s1 eb in
     Cstruct.(blit c 0 s0 0 eb.sector_len;
              blit c eb.sector_len s1 0 maclen;
@@ -108,11 +109,12 @@ module Make(BLOCK : Mirage_block.S) = struct
       size_sectors = eb.sectors;
     }
 
-  let connect ?(maclen = 8) ?(nonce_len = 8) ~key raw =
+  let connect ?(nonce_len = 8) ~key raw =
     BLOCK.get_info raw >>= fun raw_info ->
-    let key = Mirage_crypto.Cipher_block.AES.CCM.of_secret ~maclen key in
+    let key = Mirage_crypto.Cipher_block.AES.CCM16.of_secret key in
+    let maclen = Mirage_crypto.Cipher_block.AES.CCM16.tag_size in
     assert(raw_info.Mirage_block.sector_size > (( maclen + nonce_len) * 2));
-    let k = {key; maclen; nonce_len} in
+    let k = {key; nonce_len} in
     let sectors = Int64.div raw_info.Mirage_block.size_sectors 2L in
     let sector_len = raw_info.Mirage_block.sector_size in
     let s = Cstruct.create (sector_len * 2) in

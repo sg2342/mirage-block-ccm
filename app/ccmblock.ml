@@ -67,7 +67,7 @@ let copy (readf, err) (writef, write_err) count =
   aux 0L count
 
 let encrypt o =
-  Mirage_crypto_rng_unix.initialize ();
+  Mirage_crypto_rng_unix.initialize (module Mirage_crypto_rng.Fortuna);
   let t =
     opts o >>= fun (key, src, dst) ->
     Block.connect src >>= fun src_dev ->
