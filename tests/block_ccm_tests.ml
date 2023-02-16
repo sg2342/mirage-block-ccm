@@ -43,8 +43,8 @@ let write_then_read _ =
 let fail_read _ =
   let t =
     Fake_block.connect None >>= fun dev ->
-    let maclen, nonce_len, key  = 8, 8, key `K32 in
-    CCM.connect ~nonce_len ~maclen ~key dev >>= fun ccm ->
+    let nonce_len, key  = 8, key `K32 in
+    CCM.connect ~nonce_len ~key dev >>= fun ccm ->
     let s0,_ = sectors () in
     CCM.read ccm 0L [s0] >>= fun r ->
     assert_equal r (Error `DecryptError);

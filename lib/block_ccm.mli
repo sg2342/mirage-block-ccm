@@ -8,5 +8,5 @@ module Make (B: Mirage_block.S) : sig
     with type error := error
      and type write_error := write_error
 
-  val connect : ?maclen:int -> ?nonce_len:int -> key:Cstruct.t -> B.t -> t Lwt.t
+  val connect : ?nonce_len:int -> key:Cstruct.t -> B.t -> t Lwt.t
 end
